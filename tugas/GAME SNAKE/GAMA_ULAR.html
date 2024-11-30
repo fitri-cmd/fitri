@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+        }
+
+        canvas {
+            border: 2px solid #fff;
+            background-color: #111;
+        }
+
+        #startButton, #gameOverScreen {
+            position: absolute;
+            display: none;
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        #startButton {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #startButton button, #gameOverScreen button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: limegreen;
+            color: black;
+        }
+
+        #gameOverScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="startButton">
+        <h1>Snake Game</h1>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <div id="gameOverScreen">
+        <h1>Game Over</h1>
+        <p id="finalScore"></p>
+        <button onclick="startGame()">Restart</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const box = 20; // Ukuran kotak untuk setiap segmen ular
+        const canvasSize = canvas.width;
+        let snake, direction, food, score, gameInterval;
+
+        const startButton = document.getElementById("startButton");
+        const gameOverScreen = document.getElementById("gameOverScreen");
+        const finalScore = document.getElementById("finalScore");
+
+        // Fungsi untuk memulai game
+        function startGame() {
+            startButton.style.display = "none";
+            gameOverScreen.style.display = "none";
+            canvas.style.display = "block";
+
+            snake = [{ x: box * 5, y: box * 5 }];
+            direction = "RIGHT";
+            score = 0;
+
+            food = {
+                x: Math.floor(Math.random() * (canvasSize / box)) * box,
+                y: Math.floor(Math.random() * (canvasSize / box)) * box,
+            };
+
+            document.addEventListener("keydown", changeDirection);
+
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, 100);
+        }
+
+        // Fungsi untuk menangani arah gerak
+        function changeDirection(event) {
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+            if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+        }
+
+        // Fungsi untuk menggambar ular
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = index === 0 ? "lime" : "green";
+                ctx.fillRect(segment.x, segment.y, box, box);
+            });
+        }
+
+        // Fungsi untuk menggambar makanan
+        function drawFood() {
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, box, box);
+        }
+
+        // Fungsi untuk memperbarui posisi ular
+        function updateSnake() {
+            const head = { x: snake[0].x, y: snake[0].y };
+
+            if (direction === "UP") head.y -= box;
+            if (direction === "DOWN") head.y += box;
+            if (direction === "LEFT") head.x -= box;
+            if (direction === "RIGHT") head.x += box;
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                food = {
+                    x: Math.floor(Math.random() * (canvasSize / box)) * box,
+                    y: Math.floor(Math.random() * (canvasSize / box)) * box,
+                };
+            } else {
+                snake.pop();
+            }
+        }
+
+        // Fungsi untuk memeriksa tabrakan
+        function checkCollision() {
+            const head = snake[0];
+
+            // Tabrak dinding
+            if (head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize) {
+                return true;
+            }
+
+            // Tabrak tubuh sendiri
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Fungsi utama game
+        function gameLoop() {
+            if (checkCollision()) {
+                endGame();
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+            drawFood();
+            drawSnake();
+            updateSnake();
+        }
+
+        // Fungsi untuk mengakhiri game
+        function endGame() {
+            clearInterval(gameInterval);
+            canvas.style.display = "none";
+            gameOverScreen.style.display = "flex";
+            finalScore.innerText = `Your Score: ${score}`;
+        }
+    </script>
+</body>
+</html>
